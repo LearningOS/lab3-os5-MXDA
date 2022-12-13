@@ -22,6 +22,7 @@ use alloc::sync::Arc;
 use lazy_static::*;
 use manager::fetch_task;
 use switch::__switch;
+use crate::config::BIG_STRIDE;
 pub use task::{TaskControlBlock, TaskStatus};
 
 pub use context::TaskContext;
@@ -30,7 +31,7 @@ pub use pid::{pid_alloc, KernelStack, PidHandle};
 pub use processor::{
     current_task, current_trap_cx, current_user_token, run_tasks, schedule, take_current_task,
     get_current_task_status, get_current_task_first_time, update_current_task_syscall_times,
-    get_syscall_times, current_task_mmap, current_task_munmap
+    get_syscall_times, current_task_mmap, current_task_munmap, set_task_priority
 };
 
 /// Make current task suspended and switch to the next task
@@ -43,6 +44,7 @@ pub fn suspend_current_and_run_next() {
     let task_cx_ptr = &mut task_inner.task_cx as *mut TaskContext;
     // Change status to Ready
     task_inner.task_status = TaskStatus::Ready;
+    task_inner.task_stride = task_inner.task_stride + BIG_STRIDE / task_inner.task_priority;
     drop(task_inner);
     // ---- release current PCB
 
@@ -51,7 +53,13 @@ pub fn suspend_current_and_run_next() {
     // jump to scheduling cycle
     schedule(task_cx_ptr);
 }
-
+/*
+pub fn set_task_priority(prio: usize) {
+    let task = take_current_task().unwrap();
+    let mut task_inner = task.inner_exclusive_access();
+    task_inner.task_priority = prio;
+}
+*/
 /// Exit current task, recycle process resources and switch to the next task
 pub fn exit_current_and_run_next(exit_code: i32) {
     // take from Processor

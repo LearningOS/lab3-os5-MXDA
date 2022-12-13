@@ -208,3 +208,10 @@ pub fn current_task_munmap(start: usize, len: usize) -> isize {
     let mut processor = PROCESSOR.exclusive_access();
     processor.munmap(start, len)
 }
+
+pub fn set_task_priority(prio: usize) {
+    let mut processor = PROCESSOR.exclusive_access();
+    let task = processor.current.as_mut().unwrap();
+    let mut task_inner = task.inner_exclusive_access();
+    task_inner.task_priority = prio;
+}

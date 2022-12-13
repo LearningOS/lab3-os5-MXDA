@@ -49,6 +49,8 @@ pub struct TaskControlBlockInner {
     pub exit_code: i32,
     pub first_running_time: usize,
     pub syscall_times: Vec<u32>,
+    pub task_priority: usize,
+    pub task_stride: usize,
 }
 
 /// Simple access to its internal fields
@@ -108,6 +110,8 @@ impl TaskControlBlock {
                     exit_code: 0,
                     first_running_time: 0, 
                     syscall_times: vec![0; MAX_SYSCALL_NUM],
+                    task_priority: 16,
+                    task_stride: 0,
                 })
             },
         };
@@ -138,6 +142,7 @@ impl TaskControlBlock {
         // update trap_cx ppn
         inner.trap_cx_ppn = trap_cx_ppn;
         // initialize trap_cx
+        inner.task_priority = 16;
         let trap_cx = inner.get_trap_cx();
         *trap_cx = TrapContext::app_init_context(
             entry_point,
@@ -177,6 +182,8 @@ impl TaskControlBlock {
                     exit_code: 0,
                     first_running_time: 0, 
                     syscall_times: vec![0; MAX_SYSCALL_NUM],
+                    task_priority: parent_inner.task_priority,
+                    task_stride: parent_inner.task_stride,
                 })
             },
         });
