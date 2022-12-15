@@ -23,6 +23,7 @@ use lazy_static::*;
 use manager::fetch_task;
 use switch::__switch;
 use crate::config::BIG_STRIDE;
+use crate::sbi::shutdown;
 pub use task::{TaskControlBlock, TaskStatus};
 
 pub use context::TaskContext;
@@ -64,6 +65,9 @@ pub fn set_task_priority(prio: usize) {
 pub fn exit_current_and_run_next(exit_code: i32) {
     // take from Processor
     let task = take_current_task().unwrap();
+    if task.pid.0 == 0 {
+        shutdown();
+    }
     // **** access current TCB exclusively
     let mut inner = task.inner_exclusive_access();
     // Change status to Zombie
